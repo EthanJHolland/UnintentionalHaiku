@@ -11,10 +11,10 @@ from random import randint
 from nltk.corpus import cmudict
 from num2words import num2words
 from os.path import isfile, join
-from PIL import Image, ImageFont, ImageDraw 
+from PIL import Image, ImageFont, ImageDraw
 
-wordDict = cmudict.dict() 
-filepath = 'C:\\' #root folder - making this more specific will speed up file finding
+wordDict = cmudict.dict()
+default_filepath = 'C:\\' #root folder - making this more specific will speed up file finding
 fonts=["C:\\windows\\fonts\\{}.ttf".format(name) for name in ['couri','bookosi','belli']] #paths to font files
 
 def getFiles(root='C:\\', verbose=False):
@@ -22,7 +22,7 @@ def getFiles(root='C:\\', verbose=False):
         print('looking for files (this may take a while)')
 
     wordDocs=[]
-    for path, subdirs, files in os.walk(root):
+    for path, subdirs, files in tqdm(os.walk(root)):
         for name in files:
             if name.endswith('.doc') or name.endswith('.docx'):
                 wordDocs.append(os.path.join(path, name))
@@ -39,7 +39,7 @@ def extractTexts(files, verbose=False):
     texts = []
     for filename in files:
         try:
-            texts.append(docx2txt.process(filename))
+            texts.append((docx2txt.process(filename), filename))
         except:
             pass #corrupted file
     return texts
@@ -48,7 +48,7 @@ def extractHaiku(texts, verbose=False):
     haikus = []
     linecount=[5,12,17] #syllables after each line of a haiku
 
-    for text in texts:
+    for text, filename in texts:
         for sentence in re.split(r"\.|\n+",text):
             display='' #sentence formatted like a haiku
             linecheck=[False,False,False]
@@ -74,8 +74,12 @@ def extractHaiku(texts, verbose=False):
 
             if sum==17 and all(linecheck): #found a haiku
                 haikus.append(display.strip())
+
                 if verbose:
-                    print(display.strip(),'___',sep='\n')
+                    print("___\nfrom:", filename)
+                    print('haiku-', len(haikus) - 1, '.png')
+                    print(display.strip())
+
     return haikus
 
 def displayHaiku(haikus, directory='images', verbose=False):
@@ -115,7 +119,7 @@ def getWords(sentence):
                 for newWord in re.split(r"\s+|-|–",conv):
                     words.insert(i,newWord)
                     i+=1
-            except TypeError:
+            except:
                 pass #not a number
         i+=1
     return words
@@ -138,7 +142,9 @@ def getColor(img, position):
 
 
 def main(verbose=False):
-    os.makedirs('images', exist_ok=True) #make images folder if doesn't already exist  
+    filepath = sys.argv[1] if len(sys.argv) > 0 else default_filepath
+
+    os.makedirs('images', exist_ok=True) #make images folder if doesn't already exist
     files = getFiles(filepath, verbose)  #get files
     texts = extractTexts(files, verbose) #extract text from files
     haiku = extractHaiku(texts, verbose) #extract haikus from text

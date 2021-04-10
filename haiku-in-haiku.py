@@ -1,7 +1,7 @@
 '''
 haiku finding code
 in haiku-complient form
-why? because why not
+for no good reason
 
 https://xkcd.com/554/
 '''

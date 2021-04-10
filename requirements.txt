@@ -1,0 +1,5 @@
+tqdm
+nltk
+pillow
+docx2txt
+num2words
